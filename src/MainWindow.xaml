@@ -612,7 +612,15 @@
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="*"/>
+          <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Button x:Name="LogDump" Grid.Row="2" Style="{StaticResource Row}" Margin="16,0,16,16"
+                ToolTip="Сохраняет сырой поток с iPhone в файл — чтобы разобрать рывки и задержку. В файл попадает всё, что на экране iPhone.">
+          <DockPanel>
+            <TextBlock x:Name="LogDumpGlyph" Text="&#xE7C8;" FontFamily="{StaticResource Icons}" FontSize="15" Width="28" VerticalAlignment="Center"/>
+            <TextBlock x:Name="LogDumpText" Text="Записать поток для диагностики" VerticalAlignment="Center" TextWrapping="Wrap"/>
+          </DockPanel>
+        </Button>
         <Grid Margin="10,0,16,4">
           <StackPanel Orientation="Horizontal">
             <Button x:Name="LogBack" Style="{StaticResource Ghost}" Padding="10,8">
@@ -627,7 +635,7 @@
             </StackPanel>
           </Button>
         </Grid>
-        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="16,4,16,16" Padding="12,10,6,10">
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="16,4,16,10" Padding="12,10,6,10">
           <TextBox x:Name="LogBox" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="{StaticResource Muted}"
                    FontFamily="Cascadia Mono, Consolas" FontSize="11" TextWrapping="Wrap"
                    VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" SelectionBrush="{StaticResource Accent}"/>

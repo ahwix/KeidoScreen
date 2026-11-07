@@ -51,6 +51,10 @@ namespace KeidoScreen
         DateTime engineStarted;
         string failedFamily;          // decoder family that crashed during this session
         bool restartWhenIdle;         // settings changed during mirroring: restart once it ends
+        bool dumping;                 // diagnostics: engine writes the raw iPhone stream to DumpDir
+        static readonly string DumpDir = Path.Combine(AppInfo.DataDir, "diag");
+        Button LogDump;
+        TextBlock LogDumpText, LogDumpGlyph;
         int autoRestarts;
         bool loading = true, quitting;
         UpdateInfo pendingUpdate;
@@ -133,6 +137,7 @@ namespace KeidoScreen
             LogBtn.Click += (s, e) => { LogBox.Text = logText.ToString(); LogBox.ScrollToEnd(); ShowPage(LogPage, true); };
             LogBack.Click += (s, e) => ShowPage(LogPage, false);
             LogCopy.Click += (s, e) => { try { Clipboard.SetText(logText.ToString()); ShowToast("Журнал скопирован"); } catch { } };
+            LogDump.Click += (s, e) => ToggleDump();
             HelpBtn.Click += (s, e) => ShowHelp();
             InfoBack.Click += (s, e) => ShowPage(InfoPage, false);
             InfoAction.Click += (s, e) => { if (infoAction != null) infoAction(); };
@@ -164,6 +169,37 @@ namespace KeidoScreen
                     foreach (var p in new[] { SettingsPage, LogPage, InfoPage })
                         if (p.Visibility == Visibility.Visible) { if (p == SettingsPage) LeaveSettings(); else ShowPage(p, false); }
             };
+        }
+
+        void ToggleDump()
+        {
+            if (profile == null) return;
+            dumping = !dumping;
+            if (dumping)
+            {
+                try
+                {
+                    Directory.CreateDirectory(DumpDir);
+                    foreach (var f in Directory.GetFiles(DumpDir, "stream*.h264")) File.Delete(f);
+                }
+                catch (Exception ex) { dumping = false; ShowToast("Не удалось создать папку: " + ex.Message); return; }
+                LogDumpGlyph.Text = "";
+                LogDumpText.Text = "Идёт запись. Подключите iPhone на 30 секунд, затем нажмите, чтобы остановить";
+            }
+            else
+            {
+                LogDumpGlyph.Text = "";
+                LogDumpText.Text = "Записать поток для диагностики";
+            }
+            Log(dumping ? "Диагностика: запись потока в " + DumpDir : "Диагностика: запись остановлена");
+            if (proc != null && !proc.HasExited) RestartEngine(dumping ? "Запись потока включена" : "Запись остановлена");
+            else if (dumping) StartEngine();
+            if (!dumping)
+            {
+                var files = Directory.Exists(DumpDir) ? Directory.GetFiles(DumpDir, "stream*.h264") : new string[0];
+                if (files.Length == 0) { ShowToast("Файл пуст: iPhone не подключался во время записи"); return; }
+                try { Process.Start("explorer.exe", "/select,\"" + files[0] + "\""); } catch { }
+            }
         }
 
         void LeaveSettings()
@@ -333,8 +369,14 @@ namespace KeidoScreen
                 var next = Hardware.NextFamily(profile, failedFamily);
                 if (next != null) fam = next.Key;
             }
-            return Planner.Build(profile, CleanName(), q == null ? "auto" : q.Key, fam, LowLatSwitch.IsChecked == true,
+            var pl = Planner.Build(profile, CleanName(), q == null ? "auto" : q.Key, fam, LowLatSwitch.IsChecked == true,
                 AudioSwitch.IsChecked == true, FullscreenSwitch.IsChecked == true, KeepSwitch.IsChecked == true, TakeoverSwitch.IsChecked == true);
+            if (dumping)
+            {
+                // ~4000 NAL units = about a minute of 60 fps video; a new file per SPS/PPS change
+                pl.Args.Add("-vdmp"); pl.Args.Add("4000"); pl.Args.Add(Path.Combine(Native.ShortPath(DumpDir), "stream"));
+            }
+            return pl;
         }
 
         // ------------------------------------------------------------ engine

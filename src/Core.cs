@@ -67,6 +67,15 @@ namespace KeidoScreen
         [DllImport("kernel32.dll")] static extern bool SetInformationJobObject(IntPtr job, int cls, ref JOBOBJECT_EXTENDED_LIMIT_INFORMATION info, int len);
         [DllImport("kernel32.dll")] static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
         [DllImport("kernel32.dll")] static extern uint SetThreadExecutionState(uint flags);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern uint GetShortPathName(string longPath, System.Text.StringBuilder shortPath, uint size);
+
+        /// 8.3 form of an existing path: the engine takes ANSI arguments, user names may be Cyrillic.
+        public static string ShortPath(string path)
+        {
+            var sb = new System.Text.StringBuilder(1024);
+            uint n = GetShortPathName(path, sb, (uint)sb.Capacity);
+            return n > 0 && n < sb.Capacity ? sb.ToString() : path;
+        }
         [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool EnumDisplaySettings(string dev, int mode, ref DEVMODE dm);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool EnumDisplayDevices(string dev, uint i, ref DISPLAY_DEVICE dd, uint flags);
