@@ -391,7 +391,22 @@ namespace KeidoScreen
             proc = null;
             volumeTimer.Stop();
             Native.KeepAwake(false);
-            Log("Движок завершился (код " + p.ExitCode + ").");
+            uint code = unchecked((uint)p.ExitCode);
+            Log("Движок завершился (код " + (code >= 0xC0000000 ? "0x" + code.ToString("X8") : p.ExitCode.ToString()) + ").");
+            // Windows-level failures have nothing to do with the decoder: switching decoders won't help
+            string fatal = null;
+            switch (code)
+            {
+                case 0xC000001D: fatal = "Движок несовместим с этим процессором. Обновите KeidoScreen до последней версии."; break;
+                case 0xC0000135: case 0xC0000139: case 0xC000007B:
+                    fatal = "Файлы программы повреждены или неполные. Переустановите KeidoScreen."; break;
+            }
+            if (fatal != null)
+            {
+                Log(fatal);
+                SetState(State.Error, "Движок не запускается", fatal);
+                return;
+            }
             // crashed right after start: try the next decoder automatically
             if (p.ExitCode != 0 && (DateTime.Now - engineStarted).TotalSeconds < 8 && TryFallback("Движок не запустился"))
                 return;

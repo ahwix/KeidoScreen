@@ -45,8 +45,9 @@ if (Test-Path "$src\.git") { Sh "cd '$srcU' && git pull --ff-only" }
 else { Sh "git clone --depth 1 https://github.com/FDH2/UxPlay '$srcU'" }
 
 Write-Host '== Building UxPlay ==' -ForegroundColor Cyan
+# NO_MARCH_NATIVE: generic x86-64 code, otherwise the binary only runs on CPUs like the build machine's
 Sh ("cd '$srcU' && mkdir -p build && cd build && " +
-    "cmake -G Ninja -DCMAKE_BUILD_TYPE=Release .. && ninja && cmake --install . --prefix /ucrt64")
+    "cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DNO_MARCH_NATIVE=ON .. && ninja && cmake --install . --prefix /ucrt64")
 
 Write-Host '== Available H.264/H.265 decoders ==' -ForegroundColor Cyan
 Sh "gst-inspect-1.0 | grep -Ei 'h26[45]dec' || true"
