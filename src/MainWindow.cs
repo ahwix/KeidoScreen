@@ -50,6 +50,7 @@ namespace KeidoScreen
         State state = State.Idle;
         DateTime engineStarted;
         string failedFamily;          // decoder family that crashed during this session
+        bool restartWhenIdle;         // settings changed during mirroring: restart once it ends
         int autoRestarts;
         bool loading = true, quitting;
         UpdateInfo pendingUpdate;
@@ -128,7 +129,7 @@ namespace KeidoScreen
             CloseBtn.Click += (s, e) => Quit();
             PowerBtn.Click += (s, e) => Toggle();
             SettingsBtn.Click += (s, e) => ShowPage(SettingsPage, true);
-            SettingsBack.Click += (s, e) => { ShowPage(SettingsPage, false); SaveSettings(); RefreshSummary(); };
+            SettingsBack.Click += (s, e) => LeaveSettings();
             LogBtn.Click += (s, e) => { LogBox.Text = logText.ToString(); LogBox.ScrollToEnd(); ShowPage(LogPage, true); };
             LogBack.Click += (s, e) => ShowPage(LogPage, false);
             LogCopy.Click += (s, e) => { try { Clipboard.SetText(logText.ToString()); ShowToast("Журнал скопирован"); } catch { } };
@@ -161,8 +162,20 @@ namespace KeidoScreen
             {
                 if (e.Key == System.Windows.Input.Key.Escape)
                     foreach (var p in new[] { SettingsPage, LogPage, InfoPage })
-                        if (p.Visibility == Visibility.Visible) { ShowPage(p, false); if (p == SettingsPage) { SaveSettings(); RefreshSummary(); } }
+                        if (p.Visibility == Visibility.Visible) { if (p == SettingsPage) LeaveSettings(); else ShowPage(p, false); }
             };
+        }
+
+        void LeaveSettings()
+        {
+            ShowPage(SettingsPage, false);
+            SaveSettings();
+            RefreshSummary();
+            if (proc == null || proc.HasExited || plan == null || profile == null) return;
+            // apply changed settings right away; never cut off a live mirroring session
+            if (string.Join(" ", BuildPlan().Args) == string.Join(" ", plan.Args)) return;
+            if (state == State.Waiting) RestartEngine("Настройки применены");
+            else { restartWhenIdle = true; ShowToast("Новые настройки применятся после отключения iPhone"); }
         }
 
         void ShowPage(Grid page, bool show)
@@ -476,6 +489,12 @@ namespace KeidoScreen
         // ------------------------------------------------------------ visuals
         void SetState(State s, string title, string hint)
         {
+            if (s == State.Waiting && restartWhenIdle && state != State.Waiting && proc != null)
+            {
+                restartWhenIdle = false;
+                W.Dispatcher.BeginInvoke(new Action(() => { if (state == State.Waiting) RestartEngine("Настройки применены"); }));
+            }
+            if (s == State.Idle || s == State.Error) restartWhenIdle = false; // a fresh start uses the new settings anyway
             state = s;
             StatusTitle.Text = title;
             StatusHint.Text = hint ?? "";

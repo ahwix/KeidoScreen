@@ -544,7 +544,7 @@
             <CheckBox x:Name="LowLatSwitch" Style="{StaticResource Switch}">
               <StackPanel>
                 <TextBlock Text="Минимальная задержка"/>
-                <TextBlock Style="{StaticResource Desc}" Text="Для игр и интерфейса. Выключите для фильмов — звук будет точно совпадать с видео."/>
+                <TextBlock Style="{StaticResource Desc}" Text="С качеством «Авто» — 1080p H.264: iPhone кодирует быстрее, по Wi-Fi меньше задержка и рывков. Выключите для фильмов — максимальное качество под монитор и точный звук."/>
               </StackPanel>
             </CheckBox>
             <CheckBox x:Name="AudioSwitch" Style="{StaticResource Switch}" Content="Звук с iPhone"/>

@@ -432,9 +432,13 @@ namespace KeidoScreen
                 case "1080-60": h265 = false; w = 1920; h = 1080; break;
                 case "1080-30": h265 = false; w = 1920; h = 1080; fps = 30; break;
                 default:
-                    // auto: hardware H.265 at monitor resolution; CPU-only PCs get 1080p,
-                    // and 30 fps if the CPU cannot comfortably decode 1080p60
-                    if (fam.Hardware) h265 = h265ok;
+                    // auto + low latency: 1080p H.264. The PC side takes ~1 ms per frame either way;
+                    // what costs time is the iPhone encoding big frames and pushing them over Wi-Fi
+                    // (key frames at 1440p+ are what shows up as periodic hitches).
+                    // auto + quality: hardware H.265 at monitor resolution.
+                    // CPU-only PCs get 1080p, and 30 fps if the CPU can't comfortably decode 1080p60.
+                    if (fam.Hardware && lowLatency) { h265 = false; w = Math.Min(w, 1920); h = Math.Min(h, 1080); }
+                    else if (fam.Hardware) h265 = h265ok;
                     else
                     {
                         h265 = false; w = Math.Min(w, 1920); h = Math.Min(h, 1080);
@@ -460,7 +464,7 @@ namespace KeidoScreen
                 a.Add("-vc"); a.Add("queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 leaky=downstream ! videoconvert");
             }
             a.Add("-vs"); a.Add(fam.Sink);
-            a.Add("-as"); a.Add(audio ? "wasapisink" : "0");
+            a.Add("-as"); a.Add(!audio ? "0" : lowLatency ? "wasapisink low-latency=true" : "wasapisink");
             if (fullscreen) a.Add("-fs");
             if (keepWindow) a.Add("-nc");
             if (takeover) a.Add("-nohold");
