@@ -1,0 +1,27 @@
+KeidoScreen — приёмник повтора экрана iPhone/iPad для Windows
+KeidoScreen — iPhone/iPad screen mirroring receiver for Windows
+
+KeidoScreen распространяется бесплатно по лицензии GNU General Public License
+версии 3 (GPL-3.0). Полный текст: https://www.gnu.org/licenses/gpl-3.0.html
+(копия — licenses\UxPlay-LICENSE.txt).
+
+Программа включает сторонние компоненты: UxPlay (GPL-3.0), GStreamer (LGPL-2.1+),
+FFmpeg (LGPL/GPL) и другие библиотеки. Список компонентов, их версии, лицензии и
+ссылки на исходный код — в файле licenses\THIRD_PARTY_NOTICES.txt.
+
+ПРОГРАММА ПРЕДОСТАВЛЯЕТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ.
+
+iPhone, iPad и AirPlay — товарные знаки Apple Inc., зарегистрированные в США и
+других странах. KeidoScreen не связан с Apple Inc. и не одобрен ею.
+
+---------------------------------------------------------------------------
+
+KeidoScreen is free software distributed under the GNU General Public License
+version 3 (GPL-3.0). It bundles third-party components (UxPlay GPL-3.0,
+GStreamer LGPL-2.1+, FFmpeg LGPL/GPL and other libraries); see
+licenses\THIRD_PARTY_NOTICES.txt for versions, licenses and source code links.
+
+THE PROGRAM IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+iPhone, iPad and AirPlay are trademarks of Apple Inc., registered in the U.S.
+and other countries. KeidoScreen is not affiliated with or endorsed by Apple Inc.
