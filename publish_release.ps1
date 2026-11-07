@@ -1,5 +1,5 @@
-# Publishes a built release (release\*) to GitHub Releases — this is what the auto-updater reads.
-#   powershell -ExecutionPolicy Bypass -File publish_release.ps1 -Version 1.1.0 [-Notes "что нового"]
+# Publishes a built release (release\*) to GitHub Releases - this is what the auto-updater reads.
+#   powershell -ExecutionPolicy Bypass -File publish_release.ps1 -Version 1.1.0 [-Notes "release notes"]
 # Needs GitHub CLI logged in once:  gh auth login
 param([Parameter(Mandatory = $true)][string]$Version, [string]$Notes = '')
 $ErrorActionPreference = 'Stop'
@@ -14,7 +14,7 @@ if (-not (Test-Path $gh)) { throw 'GitHub CLI (gh) not found: pacman -S mingw-w6
 
 $out = Join-Path $here 'release'
 $files = @("KeidoScreen-Setup-$Version.exe", "KeidoScreen-$Version-portable.zip", 'SHA256SUMS.txt') | ForEach-Object { Join-Path $out $_ }
-foreach ($f in $files) { if (-not (Test-Path $f)) { throw "missing $f — run build_release.ps1 -Version $Version first" } }
+foreach ($f in $files) { if (-not (Test-Path $f)) { throw "missing $f - run build_release.ps1 -Version $Version first" } }
 
 # the checksums must belong to exactly these files, otherwise the updater refuses to install
 $sums = Get-Content (Join-Path $out 'SHA256SUMS.txt')

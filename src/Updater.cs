@@ -31,7 +31,7 @@ namespace KeidoScreen
         static WebClient Client()
         {
             ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072; // TLS 1.2
-            var c = new WebClient();
+            var c = new WebClient { Encoding = System.Text.Encoding.UTF8 };
             c.Headers[HttpRequestHeader.UserAgent] = AppInfo.Name + "/" + AppInfo.VersionText;
             return c;
         }
