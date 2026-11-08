@@ -106,7 +106,42 @@ namespace KeidoScreen
             SetState(State.Probing, "Подготовка…", "");
             VersionText.Text = AppInfo.Name + " " + AppInfo.VersionText;
             volumeTimer.Tick += (s, e) => ApplyVolume();
+            // the engine announces itself only on the networks that existed when it started:
+            // after sleep or a network change the iPhone stops seeing it until a restart
+            netTimer.Tick += (s, e) => { netTimer.Stop(); CheckNetwork(); };
+            System.Net.NetworkInformation.NetworkChange.NetworkAddressChanged += (s, e) => Ui(() => { netTimer.Stop(); netTimer.Start(); });
+            SystemEvents.PowerModeChanged += (s, e) =>
+            {
+                if (e.Mode == PowerModes.Resume) Ui(() => { engineNet = null; netTimer.Stop(); netTimer.Start(); });
+            };
             loading = false;
+        }
+
+        readonly DispatcherTimer netTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        string engineNet;   // IPv4 addresses the running engine was started with
+
+        static string NetSignature()
+        {
+            try
+            {
+                return string.Join(",", System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up
+                             && n.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback)
+                    .SelectMany(n => n.GetIPProperties().UnicastAddresses)
+                    .Where(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    .Select(a => a.Address.ToString()).OrderBy(x => x));
+            }
+            catch { return ""; }
+        }
+
+        void CheckNetwork()
+        {
+            if (proc == null || proc.HasExited || quitting) return;
+            string now = NetSignature();
+            if (now == engineNet || now == "") return;
+            Log("Сеть изменилась: " + (engineNet ?? "выход из сна") + " → " + now);
+            if (state == State.Waiting) RestartEngine("Сеть изменилась, приём перезапущен");
+            else restartWhenIdle = true;   // never cut off a live session
         }
 
         static BitmapSource LoadIcon()
@@ -410,6 +445,7 @@ namespace KeidoScreen
                 p.BeginOutputReadLine(); p.BeginErrorReadLine();
                 proc = p;
                 engineStarted = DateTime.Now;
+                engineNet = NetSignature();
             }
             catch (Exception ex) { SetState(State.Error, "Не удалось запустить", ex.Message); return; }
             SetState(State.Waiting, "Ожидание iPhone", WaitingHint());
